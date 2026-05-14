@@ -8,6 +8,7 @@ const initialTasks = [
 
 const TEAM = ["All", "Raf", "Dane"];
 const STATUSES = ["Not Started", "In Progress", "Complete"];
+const MANAGER_PASSWORD = "manager123";
 
 const STATUS_STYLES = {
   "Not Started": { bg: "#f3f4f6", border: "#d1d5db", text: "#374151", dot: "#6b7280" },
@@ -28,7 +29,11 @@ function formatDate(d) {
 
 export default function App() {
   const [tasks, setTasks] = useState(initialTasks);
-  const [view, setView] = useState("manager");
+  const [view, setView] = useState("warehouse");
+  const [managerUnlocked, setManagerUnlocked] = useState(false);
+  const [showPasswordBox, setShowPasswordBox] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterAssigned, setFilterAssigned] = useState("All");
   const [showForm, setShowForm] = useState(false);
@@ -49,6 +54,25 @@ export default function App() {
     inProgress: tasks.filter(t => t.status === "In Progress").length,
     overdue: tasks.filter(isOverdue).length,
   };
+
+  function openManagerView() {
+    if (managerUnlocked) {
+      setView("manager");
+    } else {
+      setShowPasswordBox(true);
+    }
+  }
+
+  function submitManagerPassword() {
+    if (passwordInput === MANAGER_PASSWORD) {
+      setManagerUnlocked(true);
+      setView("manager");
+      setShowPasswordBox(false);
+      setPasswordInput("");
+    } else {
+      alert("Incorrect password");
+    }
+  }
 
   function openNew() {
     setForm({ task: "", assignedTo: "All", dueDate: "", status: "Not Started", notes: "" });
@@ -96,6 +120,7 @@ export default function App() {
       if (t.id !== id) return t;
       const idx = STATUSES.indexOf(t.status);
       const next = STATUSES[(idx + 1) % STATUSES.length];
+
       return {
         ...t,
         status: next,
@@ -111,9 +136,7 @@ export default function App() {
         button { cursor: pointer; }
         input, select, textarea { outline: none; }
 
-        .row-hover:hover {
-          background: #f9fafb !important;
-        }
+        .row-hover:hover { background: #f9fafb !important; }
 
         .btn-primary {
           background: #f5c400;
@@ -125,9 +148,7 @@ export default function App() {
           border-radius: 6px;
         }
 
-        .btn-primary:hover {
-          background: #ffd700;
-        }
+        .btn-primary:hover { background: #ffd700; }
 
         .btn-ghost {
           background: #ffffff;
@@ -138,9 +159,7 @@ export default function App() {
           border-radius: 6px;
         }
 
-        .btn-ghost:hover {
-          background: #f3f4f6;
-        }
+        .btn-ghost:hover { background: #f3f4f6; }
 
         .tag {
           display: inline-block;
@@ -160,9 +179,7 @@ export default function App() {
           border-radius: 6px;
         }
 
-        .input-field:focus {
-          border-color: #f5c400;
-        }
+        .input-field:focus { border-color: #f5c400; }
 
         .modal-overlay {
           position: fixed;
@@ -236,8 +253,8 @@ export default function App() {
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <div className="view-toggle">
-            <button className={`view-btn ${view === "manager" ? "active" : ""}`} onClick={() => setView("manager")}>Manager</button>
             <button className={`view-btn ${view === "warehouse" ? "active" : ""}`} onClick={() => setView("warehouse")}>Warehouse</button>
+            <button className={`view-btn ${view === "manager" ? "active" : ""}`} onClick={openManagerView}>Manager</button>
           </div>
 
           {view === "manager" && (
@@ -342,9 +359,39 @@ export default function App() {
 
         <div style={{ marginTop: 16, display: "flex", gap: 20, flexWrap: "wrap" }}>
           <div style={{ fontSize: 13, color: "#6b7280" }}><span style={{ color: "#dc2626" }}>■</span> Red border = overdue task</div>
-          <div style={{ fontSize: 13, color: "#6b7280" }}>Warehouse view lets staff update task progress.</div>
+          <div style={{ fontSize: 13, color: "#6b7280" }}>Warehouse view is open to staff. Manager view needs a password.</div>
         </div>
       </div>
+
+      {showPasswordBox && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div style={{ fontWeight: 800, fontSize: 22, color: "#111827", marginBottom: 12 }}>
+              Manager Login
+            </div>
+
+            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 16 }}>
+              Enter the manager password to add, edit, or delete tasks.
+            </div>
+
+            <input
+              className="input-field"
+              type="password"
+              placeholder="Enter manager password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitManagerPassword();
+              }}
+            />
+
+            <div style={{ display: "flex", gap: 10, marginTop: 20, justifyContent: "flex-end" }}>
+              <button className="btn-ghost" onClick={() => setShowPasswordBox(false)}>Cancel</button>
+              <button className="btn-primary" onClick={submitManagerPassword}>Login</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowForm(false)}>
